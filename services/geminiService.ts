@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
+import type { Schema } from "@google/genai";
 import { Priority, Task, RecurrenceFrequency } from "../types";
 
 // Helper to get today's date context for the AI
@@ -92,6 +93,7 @@ export const generatePlanFromContent = async (
       4. 确保返回的是JSON数组格式。
       `;
 
+    // Manually define part structure to avoid import issues with 'Part' type
     const parts: any[] = [{ text: promptText }];
     
     // Add attachment part if provided (Image, PDF, etc.)

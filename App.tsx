@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Calendar as CalendarIcon, List, LayoutGrid, Clock, Search, Sparkles } from 'lucide-react';
-import { Task, ViewMode, RecurrenceFrequency } from './types';
+import { Plus, Calendar as CalendarIcon, List, LayoutGrid, Clock, Search, Sparkles, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, MapPin } from 'lucide-react';
+import { Task, ViewMode, RecurrenceFrequency, WeatherInfo } from './types';
 import { loadTasks, saveTasks } from './services/storageService';
 import { generateRecurringTasks, parseVirtualId } from './services/recurrenceService';
+import { fetchLocalWeather } from './services/weatherService';
 import TaskForm from './components/TaskForm';
 import DayView from './components/DayView';
 import WeekView from './components/WeekView';
@@ -15,6 +17,9 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DAY);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Weather State
+  const [weather, setWeather] = useState<WeatherInfo | null>(null);
   
   // Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -33,6 +38,9 @@ function App() {
     if ('Notification' in window) {
       Notification.requestPermission();
     }
+
+    // Fetch Weather
+    fetchLocalWeather().then(setWeather).catch(err => console.warn("Weather load failed", err));
   }, []);
 
   // Save on change
@@ -215,6 +223,14 @@ function App() {
       }));
   };
 
+  const getWeatherIcon = (code: number) => {
+      if (code === 0) return <Sun className="text-amber-500" />;
+      if (code >= 61 && code <= 65) return <CloudRain className="text-blue-500" />;
+      if (code >= 71) return <CloudSnow className="text-cyan-500" />;
+      if (code >= 95) return <CloudLightning className="text-purple-500" />;
+      return <Cloud className="text-slate-400" />;
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
@@ -253,9 +269,10 @@ function App() {
           </button>
         </nav>
 
+        {/* Mini Weather Widget in Sidebar Bottom (Optional fallback) or Footer */}
         <div className="p-4 border-t border-slate-100">
            <div className="text-xs text-slate-400 text-center">
-              &copy; {new Date().getFullYear()} 智能时间规划 AI
+              &copy; {new Date().getFullYear()} ChronoPlan AI
            </div>
         </div>
       </aside>
@@ -263,21 +280,41 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-sm z-10">
-          <div>
+        <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-10 gap-4">
+          <div className="flex flex-col">
             <h2 className="text-2xl font-bold text-slate-800">
               {viewMode === ViewMode.DAY && currentDate.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}
               {viewMode === ViewMode.WEEK && '本周概览'}
               {viewMode === ViewMode.LIST && '任务管理'}
             </h2>
-            <p className="text-slate-500 text-sm">
-               当前显示 {visibleTasks.length} 个任务
-            </p>
+            
+            {/* Weather Widget */}
+            <div className="flex items-center gap-3 mt-1 text-sm text-slate-600">
+                <span>当前显示 {visibleTasks.length} 个任务</span>
+                {weather ? (
+                    <>
+                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                        <div className="flex items-center gap-1.5 animate-in fade-in duration-500">
+                            {getWeatherIcon(weather.weatherCode)}
+                            <span className="font-semibold text-slate-800">{weather.temperature}°C</span>
+                            <span>{weather.weatherText}</span>
+                            <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100 ml-1">
+                                {weather.clothingAdvice}
+                            </span>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                        <MapPin size={12} />
+                        <span>获取天气信息中...</span>
+                    </div>
+                )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
              {/* Search Bar */}
-             <div className="relative">
+             <div className="relative hidden md:block">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                 <input 
                     type="text" 
@@ -288,11 +325,11 @@ function App() {
                 />
              </div>
 
-             <div className="h-8 w-px bg-slate-200 mx-2"></div>
+             <div className="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
 
              <button 
               onClick={() => setIsAiPlannerOpen(true)}
-              className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 px-4 py-2.5 rounded-full font-medium flex items-center gap-2 transition-transform active:scale-95"
+              className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 px-4 py-2.5 rounded-full font-medium flex items-center gap-2 transition-transform active:scale-95 whitespace-nowrap"
             >
               <Sparkles size={18} />
               AI 智能导入
@@ -303,7 +340,7 @@ function App() {
                 setEditingTask(undefined);
                 setIsFormOpen(true);
               }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-full font-medium shadow-md shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-full font-medium shadow-md shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95 whitespace-nowrap"
             >
               <Plus size={20} />
               新建任务
@@ -329,6 +366,7 @@ function App() {
               onDateChange={setCurrentDate}
               onEdit={handleEditTask}
               checkConflict={checkConflict}
+              weather={weather}
             />
           )}
           

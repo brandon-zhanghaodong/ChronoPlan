@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { Task, Priority } from '../types';
-import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Task, Priority, WeatherInfo } from '../types';
+import { ChevronRight, ChevronLeft, AlertCircle, Sun, CloudRain, CloudSnow, CloudLightning, Cloud } from 'lucide-react';
 
 interface WeekViewProps {
   tasks: Task[];
@@ -8,9 +9,10 @@ interface WeekViewProps {
   onDateChange: (d: Date) => void;
   onEdit: (task: Task) => void;
   checkConflict: (task: Task) => boolean;
+  weather: WeatherInfo | null;
 }
 
-const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onDateChange, onEdit, checkConflict }) => {
+const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onDateChange, onEdit, checkConflict, weather }) => {
   // Get start of week (Sunday)
   const startOfWeek = new Date(currentDate);
   startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -26,6 +28,14 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onDateChange, o
       const tDate = new Date(t.start);
       return tDate.toDateString() === date.toDateString();
     }).sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  };
+
+  const getWeatherIcon = (code: number) => {
+      if (code === 0) return <Sun size={16} className="text-amber-500" />;
+      if (code >= 61 && code <= 65) return <CloudRain size={16} className="text-blue-500" />;
+      if (code >= 71) return <CloudSnow size={16} className="text-cyan-500" />;
+      if (code >= 95) return <CloudLightning size={16} className="text-purple-500" />;
+      return <Cloud size={16} className="text-slate-400" />;
   };
 
   return (
@@ -55,12 +65,30 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onDateChange, o
                 const dayTasks = getTasksForDay(day);
                 const isToday = day.toDateString() === new Date().toDateString();
 
+                // Match forecast
+                const year = day.getFullYear();
+                const month = String(day.getMonth() + 1).padStart(2, '0');
+                const dVal = String(day.getDate()).padStart(2, '0');
+                const dateKey = `${year}-${month}-${dVal}`;
+                const forecast = weather?.daily?.find(d => d.date === dateKey);
+
                 return (
                 <div key={idx} className="flex flex-col h-full bg-slate-50/30">
-                    <div className={`p-2 text-center text-sm border-b ${isToday ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}>
-                    <div className="uppercase text-xs text-slate-400">{day.toLocaleDateString('zh-CN', { weekday: 'short' })}</div>
-                    <div>{day.getDate()}</div>
+                    <div className={`p-2 text-center text-sm border-b transition-colors ${isToday ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}>
+                        <div className="uppercase text-xs text-slate-400 mb-1">{day.toLocaleDateString('zh-CN', { weekday: 'short' })}</div>
+                        <div className="text-lg leading-none mb-1">{day.getDate()}</div>
+                        
+                        {/* Forecast Display */}
+                        {forecast && (
+                            <div className="mt-2 flex flex-col items-center gap-0.5 animate-in fade-in duration-700">
+                                {getWeatherIcon(forecast.weatherCode)}
+                                <span className="text-[10px] text-slate-500 font-normal">
+                                    {forecast.minTemp}°~{forecast.maxTemp}°
+                                </span>
+                            </div>
+                        )}
                     </div>
+
                     <div className="flex-1 p-1 space-y-1 overflow-y-auto">
                     {dayTasks.map(task => {
                         const isConflict = checkConflict(task);

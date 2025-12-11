@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Mic, StopCircle, Upload, FileText, Loader2, Sparkles, Play, Check, ArrowDownWideNarrow, Image as ImageIcon, Trash2, FileType } from 'lucide-react';
+import { X, Mic, StopCircle, Upload, FileText, Loader2, Sparkles, Play, Check, ArrowDownWideNarrow, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { generatePlanFromContent } from '../services/geminiService';
 import { Task, PriorityMap, Priority } from '../types';
 
@@ -254,7 +254,7 @@ const AiPlannerModal: React.FC<AiPlannerModalProps> = ({ isOpen, onClose, onImpo
                                 <img src={filePreview} alt="Preview" className="w-full h-48 object-contain bg-slate-800/5" />
                             ) : (
                                 <div className="w-full h-32 flex flex-col items-center justify-center bg-indigo-50 text-indigo-900">
-                                    <FileType size={40} className="mb-2 text-indigo-500" />
+                                    <FileText size={40} className="mb-2 text-indigo-500" />
                                     <span className="font-semibold text-sm">{fileName}</span>
                                     <span className="text-xs text-indigo-400">文档已就绪</span>
                                 </div>

@@ -1,3 +1,4 @@
+
 export enum Priority {
   HIGH = 'High',
   MEDIUM = 'Medium',
@@ -56,4 +57,21 @@ export interface Task {
 export interface ConflictResult {
   hasConflict: boolean;
   conflictingTaskIds: string[];
+}
+
+export interface DailyForecast {
+  date: string; // YYYY-MM-DD
+  maxTemp: number;
+  minTemp: number;
+  weatherCode: number;
+}
+
+export interface WeatherInfo {
+  temperature: number;
+  weatherCode: number;
+  weatherText: string;
+  clothingAdvice: string;
+  loading: boolean;
+  error?: string;
+  daily?: DailyForecast[];
 }

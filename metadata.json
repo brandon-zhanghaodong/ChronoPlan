@@ -2,6 +2,7 @@
   "name": "时间管理智能助手",
   "description": "一款智能时间管理应用，支持任务调度、冲突检测、长语音规划及文件导入分析。",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }
